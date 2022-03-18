@@ -24,12 +24,8 @@ function build() {
 	mkfs.ext4 ${IMG_RAW_PATH}
 
 	sudo mount ${IMG_RAW_PATH} ${IMG_HOST_MOUNTPOINT}
-	sudo pacstrap ${IMG_HOST_MOUNTPOINT} base
-	cat > ${IMG_DIR}/setup.sh <<EOF
-passwd --delete root
-rm -f /root/setup.sh
-EOF
-	sudo cp ${IMG_DIR}/setup.sh ${IMG_HOST_MOUNTPOINT}/root/setup.sh
+	sudo pacstrap -c ${IMG_HOST_MOUNTPOINT} base vim
+	sudo cp setup.sh ${IMG_HOST_MOUNTPOINT}/root/setup.sh
 	sudo arch-chroot ${IMG_HOST_MOUNTPOINT} bash /root/setup.sh
 	sudo umount ${IMG_HOST_MOUNTPOINT}
 
@@ -50,7 +46,7 @@ function run() {
 	qemu-img create -F qcow2 -b ${IMG_COW_PATH} -f qcow2 ${INSTANCE_COW_PATH}
 	qemu-system-x86_64 -hda ${INSTANCE_COW_PATH} \
 		-kernel ${KERNEL_PATH} \
-		-append "root=/dev/sda rw console=ttyS0 loglevel=5" \
+		-append "root=/dev/sda rw console=ttyS0 loglevel=1" \
 		-m 4G \
 		-nographic \
 		--enable-kvm
