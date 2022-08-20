@@ -2,7 +2,7 @@
 
 DATA_DIR="${HOME}/vm/data"
 
-KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.16.10.tar.xz"
+KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.19.1.tar.xz"
 KERNEL_ARCHIVE="$(basename ${KERNEL_URL})"
 KERNEL_NAME="$(basename -s .tar.xz ${KERNEL_URL})"
 

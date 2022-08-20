@@ -1,8 +1,6 @@
-# create a archlinux img
-#
-# pacman requirements:
-# - arch-install-scripts
-# - qemu
+# create a exherbo img
+
+set -x
 
 DATA_DIR="${HOME}/vm/data"
 IMG_DIR="${HOME}/vm/data/imgs"
@@ -11,23 +9,38 @@ mkdir -p ${IMG_DIR}
 function clean() {
 	rm -rf ${IMG_RAW_PATH}
 	rm -rf ${IMG_COW_PATH}
+  rm -f ${DATA_DIR}/${EXHERBO_ARCHIVE}
 }
 
 # img
 
 IMG_HOST_MOUNTPOINT="/mnt/root"
-IMG_RAW_PATH="${IMG_DIR}/archlinux_base.raw"
-IMG_COW_PATH="${IMG_DIR}/archlinux_base.qcow2"
+IMG_RAW_PATH="${IMG_DIR}/exherbo_base.raw"
+IMG_COW_PATH="${IMG_DIR}/exherbo_base.qcow2"
+
+EXHERBO_URL="https://dev.exherbo.org/stages/exherbo-x86_64-pc-linux-gnu-current.tar.xz"
+EXHERBO_ARCHIVE="$(basename ${EXHERBO_URL})"
 
 function build() {
 	qemu-img create -f raw ${IMG_RAW_PATH} 4G
 	mkfs.ext4 ${IMG_RAW_PATH}
 
+  sudo mkdir -p ${IMG_HOST_MOUNTPOINT}
 	sudo mount ${IMG_RAW_PATH} ${IMG_HOST_MOUNTPOINT}
-	sudo pacstrap -c ${IMG_HOST_MOUNTPOINT} base vim
-	sudo cp setup.sh ${IMG_HOST_MOUNTPOINT}/root/setup.sh
+
+  pushd ${DATA_DIR}
+    if [ ! -f ${EXHERBO_ARCHIVE} ]; then
+      curl -OL ${EXHERBO_URL}
+    fi
+  popd
+
+  sudo tar -xJpf ${DATA_DIR}/${EXHERBO_ARCHIVE} -C ${IMG_HOST_MOUNTPOINT}
+  sudo cp /etc/resolv.conf ${IMG_HOST_MOUNTPOINT}/etc/resolv.conf
+
+  sudo cp setup.sh ${IMG_HOST_MOUNTPOINT}/root/setup.sh
 	sudo arch-chroot ${IMG_HOST_MOUNTPOINT} bash /root/setup.sh
-	sudo umount ${IMG_HOST_MOUNTPOINT}
+	
+  sudo umount ${IMG_HOST_MOUNTPOINT}
 
 	qemu-img convert -f raw -O qcow2 ${IMG_RAW_PATH} ${IMG_COW_PATH}
 }
@@ -51,6 +64,5 @@ function run() {
 		-nographic \
 		--enable-kvm
 }
-
-echo "ARCH: do $*"
+echo "EXHERBO: do $*"
 $*
