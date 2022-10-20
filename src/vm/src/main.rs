@@ -1,12 +1,10 @@
-use libc;
+use syscalls::{Sysno, syscall, Errno};
 use std::ffi::CString;
 use std::error::Error;
 
-fn errno() -> i32 {
-    use libc::__errno_location;
+fn mount(source: &CString, target: &CString, fstype: &CString) -> Result<usize, Errno> {
     unsafe {
-        let ptr = __errno_location();
-        return *ptr;
+        syscall!(Sysno::mount, source.as_ptr(), target.as_ptr(), fstype.as_ptr(), 0, std::ptr::null() as *const i8)
     }
 }
 
@@ -15,14 +13,6 @@ fn main() -> Result<(), Box<dyn Error>>{
     let mount_point = CString::new("/mnt/root")?;
     let fs_type = CString::new("ext4")?;
 
-    let result = unsafe {
-        let res = libc::mount(file.as_ptr(), mount_point.as_ptr(), fs_type.as_ptr(), 0, std::ptr::null());
-        if res < 0 {
-            Err(std::io::Error::last_os_error())
-        } else {
-            Ok(res)
-        }
-    };
-    println!("mount result is : {:?}", result);
+    let _ok = mount(&file, &mount_point, &fs_type)?;
     Ok(())
 }
